@@ -258,7 +258,7 @@ class SreAgentEnvironment(Environment):
         reward = round(current_score - self._previous_score, 4)
         self._previous_score = current_score
 
-        done = current_score >= 1.0 or step >= MAX_STEPS
+        done = current_score >= 0.99 or step >= MAX_STEPS
 
         return SreAgentObservation(
             task_id=self._current_task_id,
