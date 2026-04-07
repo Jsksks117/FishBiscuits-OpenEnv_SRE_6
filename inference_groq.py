@@ -68,7 +68,7 @@ def log_end(success: bool, steps: int, rewards: List[float], task: str) -> None:
     raw_score = sum(rewards)
     final_score = max(0.01, min(0.99, float(raw_score)))
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} score={final_score:.2f} rewards={rewards_str} task={task}", flush=True)
+    print(f"[END] success={str(success).lower()} steps={steps} score={final_score:.2f} rewards={rewards_str}", flush=True)
 
 
 # ---------------------------------------------------------------------------
