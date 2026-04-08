@@ -32,7 +32,7 @@ MODEL_NAME = os.getenv("MODEL_NAME") or "llama-3.3-70b-versatile"
 # Constants
 # ---------------------------------------------------------------------------
 ENV_NAME = "SRE_Agent"
-MAX_STEPS = 20
+MAX_STEPS = 10
 TEMPERATURE = 0.2
 MAX_TOKENS = 200
 MAX_OUTPUT_CHARS = 1000
