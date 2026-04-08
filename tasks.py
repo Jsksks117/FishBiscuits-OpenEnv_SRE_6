@@ -169,7 +169,23 @@ TASK_DEFINITIONS = {
         "chmod +x /usr/local/bin/myappd\n"
     ),
 },
-"task_6_web_restore": {
+"task_6_dns_poisoning": {
+    "name": "Fix Local Service Discovery",
+    "difficulty": "hard",
+    "description": (
+        "The application is failing to connect to the internal database at 'db.local'. "
+        "The database is verified as running on localhost:5432, but the app "
+        "cannot resolve the address correctly. Fix the resolution issue."
+    ),
+    "setup_script": (
+        "set -e\n"
+        "export DEBIAN_FRONTEND=noninteractive\n"
+        "apt-get update -qq > /dev/null 2>&1\n"
+        "apt-get install -y -qq iputils-ping dnsutils > /dev/null 2>&1\n"
+        "echo '10.255.255.255 db.local' >> /etc/hosts\n"
+    ),
+},
+"task_7_web_restore": {
     "name": "Webserver Pipeline Complete Restore",
     "difficulty": "hard",
     "description": (
@@ -205,7 +221,7 @@ TASK_DEFINITIONS = {
         "chown root:root /var/www/html\n"
     ),
 },
-"task_7_disk_clean": {
+"task_8_disk_clean": {
     "name": "Disk Clean & Service Chain",
     "difficulty": "hard",
     "description": (
@@ -267,8 +283,9 @@ def grade_task(task_id: str, container) -> float:
         "task_3_nginx_config": _grade_nginx_config,
         "task_4_disk_pressure": _grade_disk_pressure,
         "task_5_db_pipeline": _grade_db_pipeline,
-        "task_6_web_restore": _grade_web_restore,
-        "task_7_disk_clean": _grade_disk_clean,
+        "task_6_dns_poisoning": _grade_dns_poisoning,
+        "task_7_web_restore": _grade_web_restore,
+        "task_8_disk_clean": _grade_disk_clean,
     }
     grader = graders.get(task_id)
     if grader is None:
@@ -470,6 +487,34 @@ def _grade_disk_pressure(container) -> float:
 # ---------------------------------------------------------------------------
 #  Advanced Individual graders (Task 6-8)
 # ---------------------------------------------------------------------------
+
+def _grade_dns_poisoning(container) -> float:
+    """
+    Task 6 (Hard): Fix Local Service Discovery.
+
+    Checkpoints:
+      - db.local resolves to 127.0.0.1 / ::1         -> 1.0
+      - Bad IP removed but not pointed to localhost   -> 0.4
+
+    Penalties:
+      - More than 5 commands for a single file edit   -> -0.2
+    """
+    score = 0.0
+
+    # Checkpoint 1: Does db.local resolve to 127.0.0.1 or localhost? (+1.0)
+    resolution = _exec(container, "getent hosts db.local")
+    if "127.0.0.1" in resolution or "::1" in resolution:
+        score = 1.0
+    # Partial Reward: Bad IP removed but not pointed to localhost (+0.4)
+    elif "10.255.255.255" not in _exec(container, "cat /etc/hosts"):
+        score = 0.4
+
+    # Penalty: Using more than 5 commands for a single file edit (-0.2)
+    history = _get_history(container).splitlines()
+    if len(history) > 5:
+        score -= 0.2
+
+    return max(0.01, min(0.99, round(score, 2)))
 
 def _grade_db_pipeline(container) -> float:
     score = 0.0

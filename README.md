@@ -1,5 +1,5 @@
 ---
-title: FishBiscuits-OpenEnv_SRE_5
+title: FishBiscuits-OpenEnv_SRE_6
 emoji: 🐳
 colorFrom: blue
 colorTo: indigo
@@ -27,17 +27,17 @@ Modern SRE teams need automated support for diagnosing and resolving service out
 Use cases include:
 - benchmarking LLM-based troubleshooting agents,
 - training reinforcement learning agents on infrastructure recovery,
-- comparing diagnostic strategies across seven progressively harder tasks,
+- comparing diagnostic strategies across eight progressively harder tasks,
 - validating agent safety by using an isolated sandbox instead of production systems.
 
 ## Environment Description
 
-The sandbox exposes a terminal-style action/observation interface inside a Docker-based Ubuntu environment. Each episode starts from a fresh container state with one of seven predefined task scenarios.
+The sandbox exposes a terminal-style action/observation interface inside a Docker-based Ubuntu environment. Each episode starts from a fresh container state with one of eight predefined task scenarios.
 
 The environment is implemented as:
 - a Docker-based sandbox for reliable local isolation,
 - a fallback subprocess mode for environments where Docker is unavailable,
-- a task registry with setup scripts and grading logic in `FishBiscuits-OpenEnv_SRE_5/tasks.py`.
+- a task registry with setup scripts and grading logic in `FishBiscuits-OpenEnv_SRE_6/tasks.py`.
 
 ### Action Space
 
@@ -58,7 +58,7 @@ Each step returns an observation containing:
 
 ## Task Descriptions
 
-The environment contains seven distinct tasks. Each task is defined with a human-readable goal, difficulty label, a setup script that injects the failure condition, and a grading routine.
+The environment contains eight distinct tasks. Each task is defined with a human-readable goal, difficulty label, a setup script that injects the failure condition, and a grading routine.
 
 ### Task 1: Fix File Permissions
 - **ID:** `task_1_permissions`
@@ -91,14 +91,20 @@ The environment contains seven distinct tasks. Each task is defined with a human
 - **Goal:** Perform full recovery of a broken database backend: kill rogue port listeners, fix PostgreSQL config permissions/syntax, start service, decode a base64 auth token, and update the application config.
 - **Success criteria:** PostgreSQL is running, the auth token is correctly applied to the DB user, and the app config matches the new password.
 
-### Task 6: Webserver Pipeline Complete Restore
-- **ID:** `task_6_web_restore`
+### Task 6: Fix Local Service Discovery
+- **ID:** `task_6_dns_poisoning`
+- **Difficulty:** Hard
+- **Goal:** The hostname `db.local` is poisoned in `/etc/hosts` with an invalid IP. Remove or fix the bad entry so `db.local` resolves to `127.0.0.1` or `::1`.
+- **Success criteria:** `db.local` resolves to `127.0.0.1` or `::1` via `getent hosts db.local` or equivalent resolution check.
+
+### Task 7: Webserver Pipeline Complete Restore
+- **ID:** `task_7_web_restore`
 - **Difficulty:** Very Hard
 - **Goal:** Full stack web restoration after a botched update. Includes extracting binary SSL backups (tar), repairing broken symlinks, fixing complex Nginx syntax errors, and restoring web content from backups with correct ownership.
 - **Success criteria:** SSL certs exist, symlinks point to valid configs, Nginx is running on port 80, and web content is owned by www-data.
 
-### Task 7: Disk Clean & Service Chain
-- **ID:** `task_7_disk_clean`
+### Task 8: Disk Clean & Service Chain
+- **ID:** `task_8_disk_clean`
 - **Difficulty:** Very Hard
 - **Goal:** Complex service chain recovery: remove massive sparse files consuming block space, recreate accidentally deleted syslog files with system permissions, and restore a backed-up cronjob with strict 644 permission requirements.
 - **Success criteria:** Sparse file is gone, syslog is recreated with owner syslog:adm, rsyslog is running, and the cron service is active with the restored job.
@@ -151,6 +157,13 @@ Each task is graded with checkpoints and penalties. Scores are computed in the t
 
 ### Task 6 Rewards and Penalties
 - **Rewards:**
+  - `1.0` if `db.local` resolves to `127.0.0.1` or `::1`
+  - `0.4` if the poisoned entry is removed but not correctly remapped
+- **Penalties:**
+  - `-0.2` for using more than 5 commands to perform the single-hosts-file edit
+
+### Task 7 Rewards and Penalties
+- **Rewards:**
   - `+0.10` for restoring SSL certificates
   - `+0.10` for removing broken default symlink
   - `+0.15` for symlinking myapp configuration
@@ -159,7 +172,7 @@ Each task is graded with checkpoints and penalties. Scores are computed in the t
   - `+0.15` for fixing Nginx syntax
   - `+0.19` for starting Nginx
 
-### Task 7 Rewards and Penalties
+### Task 8 Rewards and Penalties
 - **Rewards:**
   - `+0.15` for removing the massive sparse file
   - `+0.10` for recreating the syslog file
@@ -178,16 +191,17 @@ Each task is graded with checkpoints and penalties. Scores are computed in the t
 | Task 3 | Hard | Configuration syntax correctness and validation |
 | Task 4 | Hard | Disk pressure remediation and logging service recovery |
 | Task 5 | Very Hard | Database pipeline and credential recovery |
-| Task 6 | Very Hard | Full web stack restoration and backup recovery |
-| Task 7 | Very Hard | Storage management and multi-service chaining |
+| Task 6 | Hard | Local DNS/hosts troubleshooting |
+| Task 7 | Very Hard | Full web stack restoration and backup recovery |
+| Task 8 | Very Hard | Storage management and multi-service chaining |
 
 ## Clone and Use This Repository
 
 ### Clone the repo
 
 ```bash
-git clone https://github.com/Jsksks117/FishBiscuits-OpenEnv_SRE_5.git
-cd FishBiscuits-OpenEnv_SRE_5
+git clone https://github.com/Jsksks117/FishBiscuits-OpenEnv_SRE_6.git
+cd FishBiscuits-OpenEnv_SRE_6
 
 # Install dependencies
 pip install -e .
@@ -197,17 +211,17 @@ pip install -e .
 
 ### Install Python dependencies
 
-This repository is designed to run inside the `FishBiscuits-OpenEnv_SRE_5` project structure.
+This repository is designed to run inside the `FishBiscuits-OpenEnv_SRE_6` project structure.
 
 ```bash
-cd FishBiscuits-OpenEnv_SRE_5
+cd FishBiscuits-OpenEnv_SRE_6
 pip install -r server/requirements.txt
 ```
 
 ### Run the sandbox server locally
 
 ```bash
-cd FishBiscuits-OpenEnv_SRE_5
+cd FishBiscuits-OpenEnv_SRE_6
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
@@ -225,7 +239,7 @@ export HF_TOKEN="your_huggingface_token" # Required for HF hosted models
 
 ### Execute Baseline Agent
 ```bash
-cd FishBiscuits-OpenEnv_SRE_5
+cd FishBiscuits-OpenEnv_SRE_6
 python inference.py
 ```
 
@@ -236,7 +250,7 @@ Docker is recommended for the most reliable sandbox experience.
 ### Build the Docker image
 
 ```bash
-cd FishBiscuits-OpenEnv_SRE_5
+cd FishBiscuits-OpenEnv_SRE_6
 docker build -t sre-agent .
 ```
 
@@ -258,16 +272,17 @@ Baseline results evaluated using the `llama-3.3-70b-versatile` model based on re
 | task_3 | `llama-3.3-70b-versatile` | 3 | 0.99 | `0.40, 0.00, 0.59` | Validated config and started Nginx successfully |
 | task_4 | `llama-3.3-70b-versatile` | 10 | 0.01 | `0.01, 0.00, ...` | Struggles with exhaustive log searches and rsyslog restart logic |
 | task_5 | `llama-3.3-70b-versatile` | 10 | 0.49 | `0.34, 0.00, 0.00, 0.00, 0.15, ...` | Solved process/permission issues but missed auth chain |
-| task_6 | `llama-3.3-70b-versatile` | 10 | 0.25 | `0.01, 0.09, 0.15, -0.15, 0.15, -0.15, 0.15, ...` | Struggled with complex Nginx syntax loop |
-| task_7 | `llama-3.3-70b-versatile` | 10 | 0.55 | `0.15, 0.15, 0.00, 0.10, 0.00, 0.15, ...` | Successfully cleared disk and recreated log files |
+| task_6 | `llama-3.3-70b-versatile` | 3 | 0.99 | `0.01, 0.00, 0.98` | Resolved poisoned hosts entry successfully |
+| task_7 | `llama-3.3-70b-versatile` | 10 | 0.25 | `0.01, 0.09, 0.15, -0.15, 0.15, -0.15, 0.15, ...` | Struggled with complex Nginx syntax loop |
+| task_8 | `llama-3.3-70b-versatile` | 10 | 0.55 | `0.15, 0.15, 0.00, 0.10, 0.00, 0.15, ...` | Successfully cleared disk and recreated log files |
 
 ## Project Layout
 
-- `FishBiscuits-OpenEnv_SRE_5/` — main environment package
-- `FishBiscuits-OpenEnv_SRE_5/tasks.py` — all task definitions and grader logic
-- `FishBiscuits-OpenEnv_SRE_5/server/` — API server and OpenEnv integration
-- `FishBiscuits-OpenEnv_SRE_5/inference.py` — sample inference loop
-- `FishBiscuits-OpenEnv_SRE_5/Dockerfile` — container image definition
+- `FishBiscuits-OpenEnv_SRE_6/` — main environment package
+- `FishBiscuits-OpenEnv_SRE_6/tasks.py` — all task definitions and grader logic
+- `FishBiscuits-OpenEnv_SRE_6/server/` — API server and OpenEnv integration
+- `FishBiscuits-OpenEnv_SRE_6/inference.py` — sample inference loop
+- `FishBiscuits-OpenEnv_SRE_6/Dockerfile` — container image definition
 
 ## License
 
