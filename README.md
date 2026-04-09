@@ -6,14 +6,14 @@ colorTo: indigo
 sdk: docker
 pinned: false
 ---
-# Openenv - SRE Agent Sandbox RL Environment
+# Openenv - SRE Agent Linux (Sandbox-Ubuntu) RL Environment
 
 [![OpenEnv Component](https://img.shields.io/badge/OpenEnv-v0.2.3-blue)](https://github.com/open-env/open-env)
 [![License](https://img.shields.io/badge/License-BSD--3--Clause-green)](LICENSE)
 
 ## Overview
 
-This repository implements a sandboxed Site Reliability Engineering (SRE) benchmarking environment for evaluating agents on realistic Linux troubleshooting tasks. It is built around an OpenEnv-compatible containerized environment that simulates common infrastructure failures and measures agent performance using deterministic reward/penalty grading.
+This repository implements a sandboxed Site Reliability Engineering (SRE) benchmarking environment for evaluating agents on realistic Linux(ubuntu 22.04) troubleshooting tasks. It is built around an OpenEnv-compatible containerized environment that simulates common infrastructure failures in Linux Systems and measures agent performance using deterministic reward/penalty grading.
 
 The project is designed for:
 - evaluating LLM-driven SRE agents,
